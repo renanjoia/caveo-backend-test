@@ -10,7 +10,6 @@
     "@aws-sdk/client-cognito-identity-provider": "^3.696.0",
     "@types/node": "^22.9.1",
     "amazon-cognito-identity-js": "^6.3.12",
-    "aws-jwt-verify": "^4.0.1",
     "koa": "^2.15.3",
     "koa-bodyparser": "^4.4.1",
     "koa-router": "^13.0.1",
