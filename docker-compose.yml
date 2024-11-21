@@ -1,0 +1,81 @@
+# Versão da sintaxe do docker-compose
+version: '3.8'
+
+# Define os serviços (containers) que serão executados
+services:
+  # Primeiro serviço: nossa aplicação TypeScript
+  app:
+    # Nome do container
+    container_name: typescript-app
+    
+    # Configurações de build
+    build: 
+      # Diretório onde está o Dockerfile (. significa diretório atual)
+      context: .
+      # Nome do arquivo Dockerfile a ser usado
+      dockerfile: Dockerfile
+    
+    # Mapeamento de portas - PORT_HOST:PORT_CONTAINER
+    # Permite acessar a porta 3000 do container através da porta 3000 do host
+    ports:
+      - "3000:3000"
+
+    # Variáveis de ambiente disponíveis no container
+    environment:
+      - NODE_ENV=development        # Ambiente de desenvolvimento
+      - DB_HOST=postgres           # Nome do serviço do postgres
+      - DB_PORT=5432              # Porta padrão do PostgreSQL
+      - DB_USER=postgres          # Usuário do banco
+      - DB_PASSWORD=postgres      # Senha do banco
+      - DB_NAME=mydatabase        # Nome do banco
+      # Variáveis do Cognito
+      - COGNITO_USER_POOL_ID=seu-user-pool-id
+      - COGNITO_CLIENT_ID=seu-client-id
+      # Variáveis da AWS
+      - AWS_REGION=sua-regiao
+      - AWS_ACCESS_KEY_ID=sua-key
+      - AWS_SECRET_ACCESS_KEY=seu-secret
+
+    # Indica que este serviço depende do postgres
+    # O container do postgres será iniciado primeiro
+    depends_on:
+      - postgres
+
+    # Mapeamento de volumes
+    volumes:
+      # Mapeia o código fonte - .:/app significa: diretório atual -> /app no container
+      - .:/app
+      # Evita que o node_modules local sobrescreva o do container
+      - /app/node_modules
+
+    # Comando para executar quando o container iniciar
+    # Usando npm run dev para desenvolvimento com hot-reload
+    command: npm run dev
+
+  # Segundo serviço: banco de dados PostgreSQL
+  postgres:
+    # Nome do container do postgres
+    container_name: postgres-db
+    
+    # Imagem do PostgreSQL a ser usada (alpine é uma versão mais leve)
+    image: postgres:13-alpine
+    
+    # Mapeamento de portas para o postgres
+    ports:
+      - "5432:5432"
+
+    # Variáveis de ambiente específicas do PostgreSQL
+    environment:
+      - POSTGRES_USER=postgres        # Usuário do postgres
+      - POSTGRES_PASSWORD=postgres    # Senha do postgres
+      - POSTGRES_DB=mydatabase        # Nome do banco de dados
+
+    # Volume para persistir os dados do postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+# Define os volumes que serão criados
+volumes:
+  # Volume para os dados do postgres
+  # Isso garante que os dados persistam mesmo que o container seja destruído
+  postgres_data:

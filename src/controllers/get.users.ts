@@ -1,5 +1,4 @@
 import {Context } from "koa";
-import cognitoApp from "../services/cognito";
 import { UserService } from "../services/users";
 
 interface authHeaders {
@@ -8,17 +7,10 @@ interface authHeaders {
 
 export default async (ctx: Context) => {
     try {
-        
-        const { authorization } = ctx.request.headers as authHeaders;
-
         const userService = new UserService();
-
-        const user = await userService.getUserByCognitoJwt(authorization.split(' ')[1]);
-
-        ctx.status = user.status;
-        ctx.body = user.user??user.message;
-        return
+        const users = await userService.getAllUsers();
         
+        return ctx.body = users;
     } catch (err:any) {
 
         console.log(err)

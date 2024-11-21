@@ -25,7 +25,7 @@ export default class cognitoIntegration{
     constructor(){}
 
     //Create a new user in cognito
-    public async signUp(email:string, password:string,role:"admin"|"usuario"):Promise<{status:number,message:string}>{
+    public async signUp(email:string, password:string,role:string):Promise<{status:number,message:string}>{
         try {
             
             //Validate if email and password was sent and is is not empty
@@ -60,7 +60,7 @@ export default class cognitoIntegration{
             //Function response with status 200 and message that user was created successfully
             return {status:200,message:"User created successfully"};
 
-        } catch (err) {
+        } catch (err:any) {
 
             //Function response with status 500 and message that user was not created successfully
             console.log(err)
@@ -85,11 +85,21 @@ export default class cognitoIntegration{
                 ClientId: clientId
             });
 
+            interface AuthResponse {
+                AuthenticationResult: {
+                    AccessToken: string;  // Corrigido de AccesToken para AccessToken
+                    IdToken?: string;     // Opcional
+                    RefreshToken?: string; // Opcional
+                    ExpiresIn?: number;    // Opcional
+                }
+            }
+
             const response = await cognitoClient.send(command);
-            
+
+            const { AccessToken } = (response as AuthResponse).AuthenticationResult
             //response with 200 status if user was logged in successfully and the JWT Access token
-            return {status:200,token:response.AuthenticationResult.AccessToken};
-        } catch (err) {
+            return {status:200,token:AccessToken};
+        } catch (err:any) {
             //if error occurs, response with 500 status and the error message for more details
             return {status:500,message:err.message};
         }
@@ -103,16 +113,22 @@ export default class cognitoIntegration{
                 AccessToken: token
             })
             //Send command to AWS
-            const data = await cognitoClient.send(comando);
+            const userData = await cognitoClient.send(comando);
 
             //Interface to define the response data to be returned
-            interface userAttributes {
+            interface  UserData{
                 $metadata:object,
                 UserAttributes:object[]
             }
 
+            interface UserAttributes{
+                Name:string,
+                Value:string
+            }
+
             //Get the user email from the response data
-            const email =  data.UserAttributes[0].Value;
+            const userAttributes = (userData as UserData).UserAttributes;
+            const email =  (userAttributes[0] as UserAttributes).Value;
 
             //Command to get user groups by email - That info will help to know whats is the scopes of this user
             const userGroupsCommand = new AdminListGroupsForUserCommand({
@@ -124,8 +140,8 @@ export default class cognitoIntegration{
             const userGroups = await cognitoClient.send(userGroupsCommand);
 
             //Send response with status 200 and user data and user groups
-            return {status:200,data,userGroups};
-        } catch (err) {
+            return {status:200,data:userData,userGroups};
+        } catch (err:any) {
             return {status:500,message:err.message};
         }
     }
@@ -147,7 +163,7 @@ export default class cognitoIntegration{
             //Return status 200 that request for AWS occurred successfully and the response
             return {status:200,response};
 
-        } catch (err) {
+        } catch (err:any) {
 
             //Return status 500 that request for AWS occurred with error and the error message
             console.log(err)
@@ -173,7 +189,7 @@ export default class cognitoIntegration{
             //Return status 200 that request for AWS occurred successfully and the response
             return {status:200,response};
 
-        } catch (err) {
+        } catch (err:any) {
 
             //Return status 500 that request for AWS occurred with error and the error message
             console.log(err)
@@ -183,7 +199,7 @@ export default class cognitoIntegration{
     }
     
     //Verify if user is inside grupo by email and group name
-    public async verifyIsUserInGroup(email:string, group_name:string){
+    public async verifyIsUserInGroup(email:string, group_name:string):Promise<{status:number,userIsInsideThatGroup:boolean,message?:string}>{
         try {
             
             //Create commando to list groups for user
@@ -196,16 +212,24 @@ export default class cognitoIntegration{
             const response = await cognitoClient.send(command);
 
             //List all user groups in String Array format
-            const groups = response.Groups.map(group => group.GroupName);
+            interface responseGroups{
+                Groups:object[]
+            }
+
+            interface group{
+                GroupName:string
+            }
+
+            const groups = (response as responseGroups).Groups.map(group=> (group as group).GroupName);
 
             //Return status 200 that request for AWS occurred successfully and a boolean that indicates if user is inside that group
             return {status:200,userIsInsideThatGroup:groups.includes(group_name)};
 
-        } catch (err) {
+        } catch (err:any) {
             
             //Return status 500 that request for AWS occurred with error and the error message
             console.log(err)
-            return {status:500,message:err.message};
+            return {status:500,userIsInsideThatGroup:false,message:err.message};
 
         }
     }

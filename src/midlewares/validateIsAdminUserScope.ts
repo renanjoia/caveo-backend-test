@@ -1,5 +1,6 @@
 import {Context, Next} from "koa";
 import cognitoApp from "../services/cognito";
+import { UserService } from "../services/users";
 
 interface authHeaders {
     authorization:string
@@ -13,15 +14,11 @@ export default async (ctx: Context, next: Next) => {
         if(!authorization){ ctx.status = 404; ctx.body = {status:404,message:"Authorization header not found"}; return }
         
         const jwtAccessToken = (ctx.request.headers as authHeaders).authorization.split(' ')[1];
-        if(!jwtAccessToken){ ctx.status = 404; ctx.body = {status:404,message:"Authorization token on header is not valid"}; return }
+        
+        const userService = new UserService();
+        const isOnAdminGroup = await userService.getUserScopeByCognitoJwt(jwtAccessToken)
 
-        const cognito = new cognitoApp();
-        const user = await cognito.getUserData(jwtAccessToken);
-
-        if(user.status !== 200){
-            ctx.status = 401;
-            ctx.body = {status:401,message:"Unauthorized access by policy"};
-        }
+        if(isOnAdminGroup === false){ ctx.status = 401; ctx.body = {status:401,message:"Your scope cannot acces this endpoint"}; return }
 
         await next();
     } catch (err:any) {
