@@ -13,7 +13,7 @@ const router = new Router();
 app.use(bodyParser());
 
 router.post("/auth",require("../src/controllers/post.auth").default);
-router.get("/me",require("./midlewares/validateUser").default,require("../src/controllers/get.me").default);
+router.get("/me",require("./midlewares/validateIsValidUser").default,require("../src/controllers/get.me").default);
 
 router.post("/test-register",async(ctx:Context,next:Next)=>{
     const Cognito = new cognitoApp();

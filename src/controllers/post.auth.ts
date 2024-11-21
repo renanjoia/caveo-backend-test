@@ -4,7 +4,7 @@ import cognitoApp from "../services/cognito";
 interface authBody {
     email:string,
     password:string,
-    code:string
+    role:"admin" | "usuario"
 }
 
 export default async (ctx: Context) => {
@@ -12,27 +12,24 @@ export default async (ctx: Context) => {
 
         const email = (ctx.request.body as authBody).email;
         const password= (ctx.request.body as authBody).password;
-        const code = (ctx.request.body as authBody).code;
+        const role= (ctx.request.body as authBody).role;
     
         if(!email || !password){ ctx.status = 404; ctx.body = {status:404,message:"email or password password"}; return }
     
         const cognito = new cognitoApp();
-        const user:any = await cognito.login(email,password);
-        console.log(user.getIdToken().payload);
-        //console.log(user.getIdToken().payload); Can be used to get user scopes and groups
+        
+        const trySignUp = await cognito.signUp(email,password,role);
+        
+        const user = await cognito.signIn(email,password);
 
-        ctx.body = {status:200,access_token:user.getAccessToken().getJwtToken()};
+        ctx.status = user.status;
+        ctx.body = user;
+
     } catch (err) {
+
         console.log(err)
-
-        if(err.message){
-            ctx.status = 401;
-            ctx.body = {status:401,message:err.message};
-            return
-        }
-
         ctx.status = 500;
-        ctx.body = {status:500,message:"Internal server error"};
+        ctx.body = {status:500,message:err.message};
         
     }
 }

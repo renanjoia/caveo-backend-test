@@ -16,13 +16,13 @@ export default async (ctx: Context, next: Next) => {
         if(!jwtAccessToken){ ctx.status = 404; ctx.body = {status:404,message:"Authorization token on header is not valid"}; return }
 
         const cognito = new cognitoApp();
-        const user:any = await cognito.getUser(jwtAccessToken);
+        const user = await cognito.getUserData(jwtAccessToken);
 
         console.log(user)
 
         //console.log(user.getIdToken().payload); Can be used to get user scopes and groups
 
-        ctx.body = {status:200,access_token:user};
+        ctx.body = {status:200,user};
     } catch (err) {
         console.log(err)
 
