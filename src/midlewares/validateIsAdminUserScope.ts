@@ -16,7 +16,7 @@ export default async (ctx: Context, next: Next) => {
         const jwtAccessToken = (ctx.request.headers as authHeaders).authorization.split(' ')[1];
         
         const userService = new UserService();
-        const isOnAdminGroup = await userService.getUserScopeByCognitoJwt(jwtAccessToken)
+        const isOnAdminGroup = await userService.validateUserAdminScopeByCognitoJwt(jwtAccessToken)
 
         if(isOnAdminGroup === false){ ctx.status = 401; ctx.body = {status:401,message:"Your scope cannot acces this endpoint"}; return }
 

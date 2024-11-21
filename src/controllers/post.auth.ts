@@ -23,7 +23,7 @@ export default async (ctx: Context) => {
 
         const findUser = await userService.findByEmail(email);
 
-        if(findUser.length === 0){
+        if(findUser === null){
             //User not found on database
 
             var {role, name} = (ctx.request.body as authBody);

@@ -17,6 +17,7 @@ app.use(bodyParser());
 router.post("/auth",require("./controllers/post.auth").default);
 router.get("/me",require("./midlewares/validateIsValidUser").default,require("./controllers/get.me").default);
 router.get("/users",require("./midlewares/validateIsValidUser").default,require("./midlewares/validateIsAdminUserScope").default,require("./controllers/get.users").default);
+router.put("/edit-account",require("./midlewares/validateIsValidUser").default,require("./controllers/put.edit-account").default);
 
 router.post("/test-register",async(ctx:Context,next:Next)=>{
     const Cognito = new cognitoApp();

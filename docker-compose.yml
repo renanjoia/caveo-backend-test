@@ -22,7 +22,7 @@ services:
 
     # Variáveis de ambiente disponíveis no container
     environment:
-      - NODE_ENV=development        # Ambiente de desenvolvimento
+      - NODE_ENV=production        # Ambiente de desenvolvimento
       - DB_HOST=postgres           # Nome do serviço do postgres
       - DB_PORT=5432              # Porta padrão do PostgreSQL
       - DB_USER=postgres          # Usuário do banco

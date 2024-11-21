@@ -1,5 +1,4 @@
 import {Context } from "koa";
-import cognitoApp from "../services/cognito";
 import { UserService } from "../services/users";
 
 interface authHeaders {

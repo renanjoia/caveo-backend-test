@@ -2,6 +2,8 @@ import { AppDataSource } from "../database/data-source";
 import { User } from "../entities/User";
 import cognitoIntegration from "./cognito";
 
+const Cognito = new cognitoIntegration();
+
 export class UserService {
     
     constructor() {
@@ -9,13 +11,14 @@ export class UserService {
     }
 
     public async create(user:{name:string,email:string,role:string,isOnboarded:boolean,createdAt:Date,updatedAt:Date},password:string):Promise<User> {
-        const createUserCognito = await this.cognito.signUp(user.email,password,user.role)
+        const createUserCognito = await Cognito.signUp(user.email,password,user.role)
         const createUserDB = await AppDataSource.getRepository(User).save(user);
         return createUserDB
     }
 
-    public async findByEmail(email: string):Promise<object[]> {
-        return await AppDataSource.getRepository(User).findBy({ email });
+    public async findByEmail(email: string):Promise<User | null> {
+        const users = await AppDataSource.getRepository(User).findBy({ email });
+        return users.length > 0 ? users[0] : null;
     }
 
     public async update(user: User):Promise<User> {
@@ -28,12 +31,7 @@ export class UserService {
 
     public async getUserByCognitoJwt(jwt: string):Promise<{status:number,message?:string,user?:User|null}> {
         try {
-            interface authHeaders {
-                authorization:string
-            }
-
-            const Cognito = new cognitoIntegration();
-
+           
             const userData = await Cognito.getUserData(jwt);
 
             if(userData.status !== 200 || !userData.data || !userData.data.UserAttributes){ return {status:401,message:"Invalid token"} }
@@ -41,12 +39,11 @@ export class UserService {
             const email = userData.data.UserAttributes[0].Value;
 
             if(!email){ return {status:404,message:"User email not found"} }
+            const user = await this.findByEmail(email);
 
-            const users = await this.findByEmail(email);
+            if(!user){ return {status:404,message:"User not found"} }
 
-            if(users.length === 0){ return {status:404,message:"User not found"} }
-
-            return {status:200,user:users[0]}
+            return {status:200,user}
             
         } catch (error:any) {
             console.log(error)
@@ -54,11 +51,9 @@ export class UserService {
         }
     }
 
-    public async getUserScopeByCognitoJwt(jwt: string):Promise<boolean> {
+    public async validateUserAdminScopeByCognitoJwt(jwt: string):Promise<boolean> {
         try {
             const user = await this.getUserByCognitoJwt(jwt);
-
-            const Cognito = new cognitoIntegration();
 
             if(user.status !== 200 || !user.user){ return false }
 
