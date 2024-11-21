@@ -27,7 +27,7 @@ const start = async ()=>{
         await AppDataSource.initialize();
         console.log("Data source initialized");
 
-        app.listen(3000, () => {console.log("Koa server is running on port 3000")});
+        app.listen(80, () => {console.log("Koa server is running on port 80")});
 
         
     } catch (error:any) {
